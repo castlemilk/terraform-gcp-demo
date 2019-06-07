@@ -4,5 +4,5 @@ module "nginx-node" {
 }
 
 output "public_address" {
-  value = module.nginx-node.public_address
+  value = "${module.nginx-node.public_address}"
 }

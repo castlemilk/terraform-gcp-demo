@@ -8,6 +8,8 @@ This repository demonstrates a contrived example of automation that is possible 
 
 In addition to running the application, we also show how we an inject some customised HTML, this could be analogue to loading a static bundle that may take place in a more "real-world" production environment.
 
+![demo.gif](demo.gif)
+
 ## Getting started
 
 ### Pre-requisites
@@ -17,13 +19,28 @@ To carry out the deployment and running of the demonstration ensure you have the
 * Automation tooling - Terraform v0.12, installable by running `brew install terraform on macOS`
 * Make - install with `x-code-select --install on macOS`
 * `gcloud` CLI - used to initialise our credentials for using Terraform. Install by running `brew install gcloud`
+* Create a GCP project following the instructions [here](https://cloud.google.com/resource-manager/docs/creating-managing-projects)
+
+### init
+
+Initialise the project by running the following:
+
+```bash
+make init GOOGLE_PROJECT=<your-gcp-project-id>
+```
+
+This will bootstrap the terraform environment carrying out the following actions:
+
+* install dependencies (as mentioned above)
+* initialise terraform providers and environment
+* login to GCP and obtain default-credentials for usage in the terraform stack we're deploying
 
 ### deploy
 
 Run the following the deploy the terraform stack:
 
 ```bash
-make deploy
+make deploy GOOGLE_PROJECT=<your-gcp-project-id>
 ```
 
 This will carry out a few tasks including the following:
@@ -35,13 +52,14 @@ This will carry out a few tasks including the following:
 * customise the content served by nginx
 * enable some basic resource logging of the nginx container
 * once complete, it will open up a browser to the assigned public IP
+* enable a basic metric logging service via systemd to collect metrics for running containers
 
 ### destroy
 
 Once satisfied all is functional, run the following to purge all provisioned resources:
 
 ```bash
-make destroy
+make destroy GOOGLE_PROJECT=<your-gcp-project-id>
 ```
 
 ### getting help

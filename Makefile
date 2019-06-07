@@ -1,4 +1,4 @@
-.PHONY: bootstrap build cluster-create cluster-delete
+.PHONY: init deploy destroy
 SHELL := /bin/bash
 #❌⚠️✅
 # COLORS
@@ -9,38 +9,54 @@ RED		 := $(shell tput -Txterm setaf 1)
 CYAN	 := $(shell tput -Txterm setaf 6)
 RESET  := $(shell tput -Txterm sgr0)
 GOOGLE_PROJECT=terraform-gcp-demo-242908
-# install dependencies
+## install dependencies
 install:
-	brew install terraform
-	xcode-select --install &>/dev/null
-# login to GCP
+	@if ! command -v terraform > /dev/null | brew ls --versions $1 > /dev/null; then \
+		brew install terraform@0.12; \
+	else  \
+		echo " ✅  terraform already installed"; \
+	fi
+	@if ! command -v make > /dev/null; then \
+		xcode-select --install; \
+	else  \
+		echo " ✅ make already installed"; \
+	fi
+## login to GCP and get default credentials
 login:
-	gcloud config set project ${GOOGLE_PROJECT}
-	gcloud auth login
-	gcloud auth application-default login
+	@gcloud config set project ${GOOGLE_PROJECT}
+	@gcloud auth login
+	@gcloud auth application-default login
+terraform.init:
+	@terraform init
 
-# deploy nginx
-deploy:
-	GOOGLE_PROJECT=${GOOGLE_PROJECT} terraform apply -auto-approve
+## initialise environment
+init: install login terraform.init
 
-# destroy nginx deployment
+apply:
+	@GOOGLE_PROJECT=${GOOGLE_PROJECT} terraform apply -auto-approve;
+
+## deploy nginx
+deploy: apply
+	$(eval ADDRESS=$(shell sh -c "GOOGLE_PROJECT=${GOOGLE_PROJECT} terraform output public_address"))
+	@echo " 🌀  waiting for nginx [$(ADDRESS)] to become available..."
+	@while [ $$(curl -sL -o /dev/null -w ''%{http_code}'' http://$(ADDRESS) 2>&1) != "200" ]; do printf "."; sleep 5; done
+	@read -p "❔  nginx node ready, open (Y/N): " confirm && echo $$confirm | grep -iq "^[yY]" || exit 1
+	@open http://$(ADDRESS)
+
+## destroy nginx deployment
 destroy:
 	GOOGLE_PROJECT=${GOOGLE_PROJECT} terraform destroy -auto-approve
 
-get.public_addres:
-	ADDRESS=`terraform output public_address`
-# open nginx endpoint
-open: get.public_addres
-	open http://$(ADDRESSS)
-
-
+## open nginx endpoint
+open:
+	$(eval ADDRESS=$(shell sh -c "terraform output public_address"))
+	open http://$(ADDRESS)
 
 ###Help
 ## Show help
 help:
 	@echo ''
 	@echo '######################### TERRAFORM-GCP-DEMO #########################'
-	@echo ''
 	@echo ''
 	@echo 'Usage:'
 	@echo ''
