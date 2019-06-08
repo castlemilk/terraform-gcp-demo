@@ -54,6 +54,12 @@ This will carry out a few tasks including the following:
 * once complete, it will open up a browser to the assigned public IP
 * enable a basic metric logging service via systemd to collect metrics for running containers
 
+#### metrics
+
+Metrics are collected via a `systemd` service that is initialised on startup, this manages the execution of a task which collects the docker metrics for the nginx container every 10s, these metrics are stored in `/var/log/nginx-metrics.log`
+
+This is a fairly rudimentary solution, a more "production-grade" solution would involve having these metrics correctly normalised and sent to some storage solution such as `DataDog`, `StackDriver` et al.
+
 ### destroy
 
 Once satisfied all is functional, run the following to purge all provisioned resources:
